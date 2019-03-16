@@ -19,6 +19,12 @@ that appear frequently in signal processing and machine learning problems. In th
 - Proximal gradient descent for LASSO (ISTA)
 - FISTA
 
+# Todo :
+
+- Add simple constrained optimization
+- Examples 
+- Add ADMM
+
 # References 
 
 [Proximal Algorithms lecture notes](https://web.stanford.edu/~boyd/papers/pdf/prox_algs.pdf)
