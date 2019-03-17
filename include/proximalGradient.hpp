@@ -39,7 +39,7 @@ public:
 		return 0.5f*(_A*_x - _b).squaredNorm() + gamma*_x.lpNorm<1>();
 	}
 
-	void set_step_size(float step_size)
+	void setStepSize(float step_size)
 	{
 		this->step_size = step_size;
 	}

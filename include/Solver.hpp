@@ -28,6 +28,8 @@ public:
 				output << "step,objective\n";
 			}
 		}
+
+		stop = 0;
 	}
 
 	virtual ~Solver() 
@@ -65,6 +67,7 @@ public:
 		{
 			iterate();
 			callback();
+			if(stop) break; 
 		}
 
 		return _x;
@@ -80,14 +83,15 @@ public:
 		this->verbose = verbose;
 	}
 
-	int max_steps() { return max_steps; }
+	int getMaxSteps() { return max_steps; }
 
-	std::string name() { return name; }
+	std::string getName() { return name; }
 	
 protected:
 	int verbose;
 	int n; 
 	int step; 
+	int stop; 
 	int max_steps; 
 	std::string name;
 	std::ofstream output;

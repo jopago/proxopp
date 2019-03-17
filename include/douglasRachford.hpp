@@ -52,10 +52,15 @@ public:
 		this->proxG = proxG;
 	}
 
+	void swapProx()
+	{
+		swap = true;		
+	}
 protected:
 	VectorXf _y;
 
 	proxOperator *proxF, *proxG;
+	int swap = false;
 };
 
 
@@ -75,6 +80,14 @@ public:
 		_b = b;
 
 		proxG = new proxLinearEquality(_A,_b); 
+
+		if(swap)
+		{
+			proxOperator *tmp;
+			tmp = proxF;
+			proxF = proxG;
+			proxG = tmp;
+		}
 	}
 
 	/*

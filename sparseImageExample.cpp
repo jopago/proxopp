@@ -11,14 +11,14 @@ using namespace Eigen;
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-int main()
+int main(int argc, char **argv)
 {
 	srand(time(0));
 	const int M = 800; 
 	const int w = 64;
 	int N = w*w;
 
-	const int Sparsity = 140;
+	const int Sparsity = 150;
 
 	VectorXf b = VectorXf::Zero(N); // ground truth sparse in the canonical basis
 
@@ -28,12 +28,15 @@ int main()
 	}
 
 	MatrixXf A = MatrixXf::Random(M,N); // Measurement matrix M by N
-	VectorXf y = A*b + 0.05*VectorXf::Random(M);  // Measurements with noise
-	fistaSolver fista(N);
+	VectorXf y = A*b; // Measurements without noise
+	
+	basisPursuitSolver basisPursuit(N);
+	basisPursuit.swapProx();
+	basisPursuit.setMaxSteps(200);
 
-	VectorXf fista_x 	= fista.solve(A,y);
+	VectorXf x 	= basisPursuit.solve(A,y);
 
-	std::cout << "FISTA SNR: " << -20.0f*log10((b-fista_x).norm()/b.norm()) << std::endl; 
+	std::cout << "BP SNR: " << -20.0f*log10((b-x).norm()/b.norm()) << std::endl; 
 
 	cv::Size size(w,w);
 	cv::Mat original(size, CV_32FC1), reconstruction(size,CV_32FC1);
@@ -43,7 +46,7 @@ int main()
 		for(int j = 0; j < w; j++)
 		{
 			original.at<float>(j,i) 		= b[i*w+j];
-			reconstruction.at<float>(j,i) 	= fista_x[i*w+j];
+			reconstruction.at<float>(j,i) 	= x[i*w+j];
 		}
 	}
 
@@ -69,5 +72,6 @@ int main()
 	cv::namedWindow("Result", 1);
 	cv::imshow("Result", frame);
 	cv::waitKey(0);
+
 	return 0;
 }
