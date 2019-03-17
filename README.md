@@ -4,13 +4,13 @@
 
 [![License](http://img.shields.io/:license-mit-blue.svg?style=flat-square)](LICENSE)
 
-![Alt text](https://raw.githubusercontent.com/jopago/proxopp/master/convergence.png)
+![](https://raw.githubusercontent.com/jopago/proxopp/master/output/screenshot.png)
 
 # Proximal operators
 
 The proximal operator of a convex function is defined as follows:
 
-![alt text](https://latex.codecogs.com/gif.latex?%5Ctext%7Bprox%7D_%7Bf%7D%5Cleft%28x%20%5Cright%20%29%20%3D%20%5Carg%5Cmin_%7By%20%5Cin%20%5Cmathbb%7BR%7D%5En%7D%20f%28y%29%20&plus;%20%5Cfrac12%20%5Cleft%5CVert%20y-x%20%5Cright%5CVert_2%5E2)
+![](https://latex.codecogs.com/gif.latex?%5Ctext%7Bprox%7D_%7Bf%7D%5Cleft%28x%20%5Cright%20%29%20%3D%20%5Carg%5Cmin_%7By%20%5Cin%20%5Cmathbb%7BR%7D%5En%7D%20f%28y%29%20&plus;%20%5Cfrac12%20%5Cleft%5CVert%20y-x%20%5Cright%5CVert_2%5E2)
 
 It plays an important role in several optimization algorithms that can be used to solve Basis Pursuit and LASSO problems 
 that appear frequently in signal processing and machine learning problems. In this repo I have currently implemented:
