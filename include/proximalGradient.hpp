@@ -39,6 +39,15 @@ public:
 		return 0.5f*(_A*_x - _b).squaredNorm() + gamma*_x.lpNorm<1>();
 	}
 
+	void set_step_size(float step_size)
+	{
+		this->step_size = step_size;
+	}
+
+	void setProximal(proxOperator *prox)
+	{
+		proxF = prox; 
+	}
 protected:
 	VectorXf gradient(VectorXf x)
 	{
@@ -64,11 +73,11 @@ protected:
 class fistaSolver : public proximalGradientSolver 
 {
 public:
-	fistaSolver(int n, float gamma = 1.0f, float momentum = 1.0f, 
+	fistaSolver(int n, float gamma = .1f, bool compute_step_size = true, 
 		int verbose=1, int max_steps=100, 
 		std::string name="FISTA") : proximalGradientSolver(n, gamma, step_size, verbose, max_steps,
-		name),
-	momentum(momentum)
+		name), compute_step_size(compute_step_size),
+		momentum(momentum)
 	{
 		_z 	= VectorXf::Zero(n);
 		_Ab = VectorXf::Zero(n);
@@ -85,12 +94,18 @@ public:
 		_Q = _A.transpose()*A;
 		
 		// _Q is real symmetric 
+		// Computing the step size bound is very expensive
+		// but we only need compute it once for a given A
 		
-		SelfAdjointEigenSolver<MatrixXf> es;
-		es.compute(_Q, false);
+		if(compute_step_size)
+		{
+			SelfAdjointEigenSolver<MatrixXf> es;
+			es.compute(_Q, false);
 
-		float spectralRadius = es.eigenvalues().array().abs().maxCoeff();
-		step_size = 1.0 / ( spectralRadius); 
+			float spectralRadius = es.eigenvalues().array().abs().maxCoeff();
+			step_size = 1.0 / ( spectralRadius); 
+		}
+
 	}
 
 	void iterate() override
@@ -109,6 +124,7 @@ private:
 	VectorXf _Ab, _z, _x_new; 
 
 	float momentum, momentum_new; // Nesterov momentum
+	bool compute_step_size = true;
 };
 
 #endif 

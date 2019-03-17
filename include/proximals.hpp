@@ -75,4 +75,20 @@ private:
 	const double tol = 1e-6;
 };
 
+//	Proximal operator of the squared L2 norm 
+
+class proximalL2Square : public proxOperator
+{
+public:
+	float f(VectorXf& x) override
+	{
+		return x.squaredNorm();
+	}
+
+	VectorXf operator()(VectorXf& x, float lambda) override
+	{
+		return x/(1.0f+lambda);
+	}
+}; 
+
 #endif

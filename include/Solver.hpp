@@ -79,6 +79,11 @@ public:
 	{
 		this->verbose = verbose;
 	}
+
+	int max_steps() { return max_steps; }
+
+	std::string name() { return name; }
+	
 protected:
 	int verbose;
 	int n; 
