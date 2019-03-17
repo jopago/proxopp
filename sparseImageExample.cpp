@@ -14,21 +14,21 @@ using namespace Eigen;
 int main()
 {
 	srand(time(0));
-	const int M = 300; 
-	const int w = 32;
+	const int M = 800; 
+	const int w = 64;
 	int N = w*w;
 
-	const int Sparsity = 80;
+	const int Sparsity = 140;
 
 	VectorXf b = VectorXf::Zero(N); // ground truth sparse in the canonical basis
 
-	for(int i = 0; i < Sparsity; i++) // ~ 50 non negative coeffs
+	for(int i = 0; i < Sparsity; i++)
 	{
 		b[rand() % N] = (float)(rand()) / std::numeric_limits<int>::max();
 	}
 
 	MatrixXf A = MatrixXf::Random(M,N); // Measurement matrix M by N
-	VectorXf y = A*b + 0.1*VectorXf::Random(M);  // Measurements with noise
+	VectorXf y = A*b + 0.05*VectorXf::Random(M);  // Measurements with noise
 	fistaSolver fista(N);
 
 	VectorXf fista_x 	= fista.solve(A,y);
