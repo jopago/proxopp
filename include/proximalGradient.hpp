@@ -11,13 +11,16 @@ using namespace Eigen;
 class proximalGradientSolver : public Solver 
 {
 public:
-	proximalGradientSolver(int n, float gamma = 0.1f, 
+	proximalGradientSolver(int n, float gamma = 1.0f, 
 		float step_size = 0.01f, int verbose=1, int max_steps=100, 
 		std::string name="ISTA") : Solver(n, verbose, max_steps, name), gamma(gamma), step_size(step_size)
 	{
-
+		proxF = new softThresholdingOperator(); 
 	}
-	~proximalGradientSolver() {}
+	~proximalGradientSolver() 
+	{
+		delete proxF;
+	}
 
 	void initParameters(MatrixXf& A, VectorXf& b) override
 	{
@@ -27,7 +30,8 @@ public:
 
 	void iterate() override
 	{	
-		_x = softThresholding(_x - step_size*gradient(_x), gamma);
+		VectorXf grad_step = _x - step_size*gradient(_x);
+		_x = (*proxF)(grad_step, gamma);
 	}
 
 	float currentObjective()
@@ -46,6 +50,7 @@ protected:
 
 	float step_size; 
 	float gamma; 
+	proxOperator* proxF; 
 };
 
 /* 	FISTA
@@ -59,7 +64,7 @@ protected:
 class fistaSolver : public proximalGradientSolver 
 {
 public:
-	fistaSolver(int n, float gamma = 0.1f, float momentum = 0.0f, 
+	fistaSolver(int n, float gamma = 1.0f, float momentum = 1.0f, 
 		int verbose=1, int max_steps=100, 
 		std::string name="FISTA") : proximalGradientSolver(n, gamma, step_size, verbose, max_steps,
 		name),
@@ -79,13 +84,19 @@ public:
 
 		_Q = _A.transpose()*A;
 		
-		float spectralRadius = _Q.operatorNorm(); 
+		// _Q is real symmetric 
+		
+		SelfAdjointEigenSolver<MatrixXf> es;
+		es.compute(_Q, false);
+
+		float spectralRadius = es.eigenvalues().array().abs().maxCoeff();
 		step_size = 1.0 / ( spectralRadius); 
 	}
 
 	void iterate() override
 	{	
-		_x_new = softThresholding(_z - step_size*(_Q*_z - _Ab), gamma * step_size);
+		VectorXf grad_step = _z - step_size*(_Q*_z - _Ab);
+		_x_new = (*proxF)(grad_step, step_size);
 		momentum_new =  0.5f*(1.0f + sqrt(1.0f + 4.0f*momentum*momentum)); 
 		_z = _x_new + ((momentum-1) / momentum_new) * (_x_new - _x);
 

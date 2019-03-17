@@ -6,44 +6,85 @@
 
 using namespace Eigen; 
 
-class douglasRachfordSolver : public Solver 
+//	This class solves min f(x) + g(x) where f,g are convex
+//	and proximal, the proximal operator is given in a
+//	class that can evaluate prox_{\lambda f}(x) and f(x)
+
+// 	Note that it is not symmetric in f and g
+//	By swapping f and g you get two different algorithms
+//	Depending on the context you might prefer one or the other 
+
+class douglasRachfordSolver : public Solver
 {
 public:
-	douglasRachfordSolver(int n, int verbose=1, int max_steps=100, std::string name="Douglas Rachford") : Solver(n, verbose, max_steps, name)
+	douglasRachfordSolver(int n, int verbose=1, int max_steps=100,std::string name="Douglas Rachford") :
+	Solver(n, verbose, max_steps, name)
 	{
-		_y = VectorXf::Zero(n);
+		_y = _x;
 	}
-	~douglasRachfordSolver() {}
-
-	void initParameters(MatrixXf& A, VectorXf& b) override
+	~douglasRachfordSolver() 
 	{
-		_Q = A.transpose()*((A*A.transpose()).inverse());
-		_b = b;
-		_A = A;
+		delete proxF;
+		delete proxG;
 	}
 
-	void iterate() override 
+	void iterate()
 	{
-		_x = proximal(_y);
-		_y = _y + softThresholding(2*_x - _y, 1.0f);
+		VectorXf prox_step;
+
+		_x = (*proxF)(_y, 1.0f);
+		prox_step = 2*_x - _y;
+		_y = _y + (*proxG)(prox_step, 1.0f) - _x;
 	}
 
 	float currentObjective() override
 	{
-		return _x.lpNorm<1>(); // L1 norm 
-	}
-private:
-	VectorXf proximal(VectorXf& x)
-	{
-		// Proximal operator of indicator function of {Ax = b} 
-		return (x - _Q*(_A*x - _b));
+		return proxF->f(_x) + proxG->f(_x);
 	}
 
-	MatrixXf _Q;
+	void setProxF(proxOperator* proxF) 
+	{
+		this->proxF = proxF;
+	}
+
+	void setProxG(proxOperator* proxG)
+	{
+		this->proxG = proxG;
+	}
+
+protected:
+	VectorXf _y;
+
+	proxOperator *proxF, *proxG;
+};
+
+
+class basisPursuitSolver : public douglasRachfordSolver 
+{
+public:
+	basisPursuitSolver(int n, int verbose=1, int max_steps=100, std::string name="Basis Pursuit (DR)") : 
+	douglasRachfordSolver(n, verbose, max_steps, name)
+	{
+		proxF = new softThresholdingOperator(); 
+	}
+	~basisPursuitSolver() {}
+
+	void initParameters(MatrixXf& A, VectorXf& b) override
+	{
+		_A = A;
+		_b = b;
+
+		proxG = new proxLinearEquality(_A,_b); 
+	}
+
+	/*
+	float currentObjective() override
+	{
+		return _x.lpNorm<1>(); 
+	} */
+private:
 	MatrixXf _A;
 	VectorXf _b;
-
-	VectorXf _y;
 };
 
 #endif
