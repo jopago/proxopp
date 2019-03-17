@@ -4,7 +4,7 @@
 
 [![License](http://img.shields.io/:license-mit-blue.svg?style=flat-square)](LICENSE)
 
-![](https://raw.githubusercontent.com/jopago/proxopp/master/output/screenshot.png)
+![screenshot](https://raw.githubusercontent.com/jopago/proxopp/master/output/screenshot.png)
 
 # Proximal operators
 
@@ -18,6 +18,9 @@ that appear frequently in signal processing and machine learning problems. In th
 - Douglas Rachford (or proximal splitting) for basis pursuit
 - Proximal gradient descent for LASSO (ISTA)
 - FISTA
+
+![convergence](https://raw.githubusercontent.com/jopago/proxopp/master/output/convergence.png)
+
 
 # Todo :
 
