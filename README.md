@@ -18,15 +18,10 @@ that appear frequently in signal processing (compressed sensing for instance), q
 - Douglas Rachford (or proximal splitting) for basis pursuit
 - Proximal gradient descent for LASSO (ISTA)
 - FISTA
+- ADMM for regularized portfolio optimization
 
 ![convergence](https://raw.githubusercontent.com/jopago/proxopp/master/output/convergence.png)
 
-
-# Todo :
-
-- Add simple constrained optimization
-- Examples (portfolio optimization)
-- Add ADMM
 
 # References 
 
