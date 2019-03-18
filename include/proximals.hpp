@@ -3,7 +3,7 @@
 
 #include <Eigen/Dense>
 
-using namespace Eigen; 
+using namespace Eigen;
 
 class proxOperator
 {
@@ -11,7 +11,7 @@ public:
 	proxOperator() {}
 	virtual ~proxOperator() {}
 
-	virtual float f(VectorXf& x) 
+	virtual float f(VectorXf& x)
 	{
 		// f(x)
 		return 0.0f;
@@ -21,6 +21,16 @@ public:
 	{
 		// prox_{\lambda f}(x)
 		return x;
+	}
+
+	virtual VectorXf operator()(VectorXf& x)
+	{
+		return x;
+	}
+
+	virtual VectorXf prox(VectorXf& x, float lambda)
+	{
+		return (*this)(x, lambda);
 	}
 };
 
@@ -43,39 +53,43 @@ public:
 
 //	The proximal operator of the (convex) indicator
 //	function of the set {x | Ax = b} is
-//	x - At(AtA)^(-1)(Ax - b) 
+//	x - At(AtA)^(-1)(Ax - b)
 
 class proxLinearEquality : public proxOperator
 {
 public:
-	proxLinearEquality(MatrixXf& A, VectorXf& b) : _A(A), _b(b) 
+	proxLinearEquality(MatrixXf& A, VectorXf& b) : _A(A), _b(b)
 	{
 		_Q = A.transpose()*((A*A.transpose()).inverse());
+		_Qb = _Q*_b;
+		_QA = _Q*_A;
 	}
 
 	float f(VectorXf& x) override
 	{
-		if((_A*x - _b).norm() < tol) 
+		if((_A*x - _b).norm() < tol)
 		{
 			return 0;
 		} else {
-			return Infinity; 
+			return Infinity;
 		}
 	}
 
 	VectorXf operator()(VectorXf& x, float lambda) override
 	{
-		return (x - _Q*(_A*x - _b));
+		return (x - _QA*x - _Qb);
 	}
 private:
 	MatrixXf _A;
 	MatrixXf _b;
-	MatrixXf _Q; 
+	MatrixXf _Q;
+	MatrixXf _QA;
+	VectorXf _Qb;
 
 	const double tol = 1e-6;
 };
 
-//	Proximal operator of the squared L2 norm 
+//	Proximal operator of the squared L2 norm
 
 class proximalL2Square : public proxOperator
 {
@@ -89,9 +103,107 @@ public:
 	{
 		return x/(1.0f+lambda);
 	}
-}; 
+};
 
-//	Proximal operator of the indicator function of 
+//	Proximal operator of euclidean norm
+//	Block thresholding
+
+class proximalL2 : public proxOperator
+{
+public:
+	float f(VectorXf& x)
+	{
+		return x.lpNorm<2>();
+	}
+
+	VectorXf operator()(VectorXf& x, float lambda)
+	{
+		const float norm2 = x.lpNorm<2>();
+
+		if(lambda > norm2) return VectorXf::Zero(x.rows());
+
+		return x*(1 - lambda / norm2);
+	}
+};
+
+//	PROJECTION ON BALLS
+
+//	Projector onto L2 ball
+
+class proximalL2Ball : public proxOperator
+{
+public:
+	proximalL2Ball(float lambda) : radius(lambda) {}
+
+	float f(VectorXf& x)
+	{
+		return x.lpNorm<2>() <= radius ? 0 : Infinity;
+	}
+
+	VectorXf operator()(VectorXf& x, float lambda = 0.0)
+	{
+		return x*radius/x.lpNorm<2>();
+	}
+private:
+	float radius;
+};
+
+//	Fast Projection onto the L1 Ball using sorting
+//	Using algorithm from
+//	Held, M., Wolfe, P., Crowder, H.: Validation of subgradient optimization.
+//	Mathematical Programming6, 62–88 (1974)
+
+//	Alternatively, see Condat, L.
+// 	Fast Projection onto the Simplex and the L1-Ball
+//	https://www.gipsa-lab.grenoble-inp.fr/~laurent.condat/publis/Condat_simplexproj.pdf
+//	It corresponds to Algorithm 1
+
+class proximalL1Ball : public proxOperator
+{
+public:
+	proximalL1Ball(float lambda) : radius(lambda) {}
+
+	float f(VectorXf& x)
+	{
+		return (x.lpNorm<1>() < radius) ? 0 : Infinity;
+	}
+
+	VectorXf operator()(VectorXf& x, float lambda = 0.0f)
+	{
+		if(x.lpNorm<1>() < radius) return x;
+
+		ArrayXf u = ArrayXf(x.array().abs());
+		std::sort(u.data(), u.data()+u.size(), std::greater<float>());
+
+		int k=1, K=1;
+		float tau = 0.0f;
+
+		for(k=1;k<=x.rows();k++)
+		{
+			float mean = 0.0f;
+
+			for(int i = 0; i < k; i++)
+			{
+				mean += u[i];
+			}
+			mean = (mean-radius)/k;
+
+			if(mean < u[k-1])
+			{
+				K 	= k-1;
+				tau = mean;
+			}
+		}
+		std::cout << tau << std::endl;
+
+		VectorXf xtau = x.array().abs()-tau*ArrayXf::Ones(x.rows());
+		return x.array().sign()*(xtau).array().max(VectorXf::Zero(x.rows()).array());
+	}
+private:
+	float radius;
+};
+
+//	Proximal operator of the indicator function of
 //	the set {x | max abs(x_i) <= lambda} (Linf ball)
 
 class proximalLinfBall : public proxOperator
@@ -109,70 +221,15 @@ public:
 		for(int i = 0; i < x.rows(); i++)
 		{
 			if(x[i] > radius) 	x[i] = radius;
-			if(x[i] < -radius) 	x[i] = -radius; 
+			if(x[i] < -radius) 	x[i] = -radius;
 		}
-	}
-private:
-	float radius;
-};
-
-//	Fast Projection onto the L1 Ball using sorting
-//	Using algorithm from
-//	Held, M., Wolfe, P., Crowder, H.: Validation of subgradient optimization.
-//	Mathematical Programming6, 62–88 (1974)
-
-//	Alternatively, see Condat, L. 
-// 	Fast Projection onto the Simplex and the L1-Ball
-//	https://www.gipsa-lab.grenoble-inp.fr/~laurent.condat/publis/Condat_simplexproj.pdf
-//	It corresponds to Algorithm 1
-
-class proximalL1Ball : public proxOperator
-{
-public:
-	proximalL1Ball(float lambda) : radius(lambda) {}
-
-	float f(VectorXf& x) 
-	{
-		return (x.lpNorm<1>() < radius) ? 0 : Infinity;
-	}
-
-	VectorXf operator()(VectorXf& x, float lambda = 0.0f)
-	{
-		if(x.lpNorm<1>() < radius) return x;
-		
-		ArrayXf u = ArrayXf(x.array().abs());
-		std::sort(u.data(), u.data()+u.size(), std::greater<float>());	
-		
-		int k=1, K;
-		float tau = 0.0f;
-
-		for(k=1;k<=x.rows();k++)
-		{
-			float mean = 0.0f;
-
-			for(int i = 0; i < k; i++)
-			{
-				mean += u[i];
-			} 
-			mean = (mean-radius)/k; 
-
-			if(mean < u[k-1]) 
-			{
-				K 	= k-1;
-				tau = mean;
-			} 
-		}
-		std::cout << tau << std::endl; 
-
-		VectorXf xtau = x.array().abs()-tau*ArrayXf::Ones(x.rows());
-		return x.array().sign()*(xtau).array().max(VectorXf::Zero(x.rows()).array());
 	}
 private:
 	float radius;
 };
 
 //	Projection on the intersection of L1 and Linf balls
-//	with binary search 
+//	with binary search
 
 class proximalL1LinfBall : public proxOperator
 {
@@ -184,7 +241,7 @@ public:
 	float f(VectorXf& x)
 	{
 		if(x.lpNorm<1>()<r_l1 && x.lpNorm<Infinity>() < r_linf) return 0.0f;
-		return Infinity; 
+		return Infinity;
 	}
 
 	VectorXf operator()(VectorXf& x)
@@ -196,7 +253,7 @@ public:
 		if(y.lpNorm<1>() < r_l1) return y;
 
 		const double eps = 1e-6;
-		const int itermax = 50; 
+		const int itermax = 50;
 		int k = 0;
 		float nu_l = 0.0f;
 		float nu_r = x.array().abs().maxCoeff();

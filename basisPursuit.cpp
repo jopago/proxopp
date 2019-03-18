@@ -5,6 +5,7 @@ using namespace Eigen;
 
 #include "proximalGradient.hpp"
 #include "douglasRachford.hpp"
+#include "admmSolver.hpp"
 #include <ctime>
 
 #include <opencv2/core/core.hpp>
@@ -14,11 +15,11 @@ using namespace Eigen;
 int main(int argc, char **argv)
 {
 	srand(time(0));
-	const int M = 800; 
+	const int M = 1200;
 	const int w = 64;
 	int N = w*w;
 
-	const int Sparsity = 150;
+	const int Sparsity = 200;
 
 	VectorXf b = VectorXf::Zero(N); // ground truth sparse in the canonical basis
 
@@ -29,14 +30,14 @@ int main(int argc, char **argv)
 
 	MatrixXf A = MatrixXf::Random(M,N); // Measurement matrix M by N
 	VectorXf y = A*b; // Measurements without noise
-	
+
 	basisPursuitSolver basisPursuit(N);
 	basisPursuit.swapProx();
 	basisPursuit.setMaxSteps(200);
 
 	VectorXf x 	= basisPursuit.solve(A,y);
 
-	std::cout << "BP SNR: " << -20.0f*log10((b-x).norm()/b.norm()) << std::endl; 
+	std::cout << "BP SNR: " << -20.0f*log10((b-x).norm()/b.norm()) << std::endl;
 
 	cv::Size size(w,w);
 	cv::Mat original(size, CV_32FC1), reconstruction(size,CV_32FC1);
