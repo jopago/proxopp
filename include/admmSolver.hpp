@@ -9,6 +9,8 @@
 
 //  https://web.stanford.edu/~boyd/papers/pdf/admm_distr_stats.pdf
 
+namespace proxopp 
+{
 class admmSolver : public Solver
 {
 public:
@@ -24,13 +26,13 @@ public:
         z = _x;
         u = z;
         z_old = z;
-        A = MatrixXf::Identity(n,n);
+        A = Eigen::MatrixXf::Identity(n,n);
 
         max_steps = 500;
     }
     ~admmSolver() {}
 
-    VectorXf solve()
+    Eigen::VectorXf solve()
     {
         step = 0;
 
@@ -39,8 +41,8 @@ public:
             x_step(); // updates _x
             z_step(); // updates z
 
-            VectorXf r = A*_x + z;
-            VectorXf s = rho*A*(z - z_old);
+            Eigen::VectorXf r = A*_x + z;
+            Eigen::VectorXf s = rho*A*(z - z_old);
             u += r;
 
             primal_err  = r.squaredNorm();
@@ -72,9 +74,9 @@ public:
 
     virtual void z_step() {}
 protected:
-    VectorXf z, z_old;
-    VectorXf u;
-    MatrixXf A;
+    Eigen::VectorXf z, z_old;
+    Eigen::VectorXf u;
+    Eigen::MatrixXf A;
 
     float mu, rho;
     float dual_tol, primal_tol;
@@ -91,12 +93,12 @@ protected:
 class ptfVolConstrainedL2 : public admmSolver
 {
 public:
-    ptfVolConstrainedL2(VectorXf returns, MatrixXf covariance, VectorXf x0, float vol_target = 0.03f,
+    ptfVolConstrainedL2(Eigen::VectorXf returns, Eigen::MatrixXf covariance, Eigen::VectorXf x0, float vol_target = 0.03f,
     float lambda = 0.01f) : admmSolver(returns.rows()), vol_target(vol_target),
     lambda(lambda), covariance(covariance), returns(returns), x0(x0)
     {
         projL2 = new proximalL2Ball(vol_target);
-        xStepSystem = lambda*MatrixXf::Identity(returns.rows(), returns.rows()) + rho*covariance;
+        xStepSystem = lambda*Eigen::MatrixXf::Identity(returns.rows(), returns.rows()) + rho*covariance;
 
         //  The quadratic form constraint <x,Sigma*x> <= vol_target^2
         //  Can be written as ||Lx|| <= vol_target^2 with L the
@@ -113,34 +115,34 @@ public:
     void rho_callback()
     {
         // Update system matrix if rho has changed
-        xStepSystem = lambda*MatrixXf::Identity(n,n) + rho*covariance;
+        xStepSystem = lambda*Eigen::MatrixXf::Identity(n,n) + rho*covariance;
     }
 
     void x_step()
     {
-        VectorXf b = returns + lambda*x0 + rho*L.transpose()*(z+u);
+        Eigen::VectorXf b = returns + lambda*x0 + rho*L.transpose()*(z+u);
         _x = xStepSystem.llt().solve(b);
     }
 
     void z_step()
     {
-        VectorXf w = L*_x - u;
+        Eigen::VectorXf w = L*_x - u;
         z = (*projL2)(w, 0);
     }
 
     float currentObjective()
     {
         // Regularized Markowtiz objective
-        VectorXf Lx = L*_x;
+        Eigen::VectorXf Lx = L*_x;
         return -returns.dot(_x) + lambda*(_x-x0).squaredNorm() + projL2->f(Lx);
     }
 private:
     proxOperator *projL2;
 
     float lambda, vol_target;
-    VectorXf returns, x0;
-    MatrixXf covariance, L;
-    MatrixXf xStepSystem;
+    Eigen::VectorXf returns, x0;
+    Eigen::MatrixXf covariance, L;
+    Eigen::MatrixXf xStepSystem;
 };
-
+} // namespace proxopp 
 #endif

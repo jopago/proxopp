@@ -3,32 +3,32 @@
 
 #include <Eigen/Dense>
 
-using namespace Eigen;
-
+namespace proxopp
+{
 class proxOperator
 {
 public:
 	proxOperator() {}
 	virtual ~proxOperator() {}
 
-	virtual float f(VectorXf& x)
+	virtual float f(Eigen::VectorXf& x)
 	{
 		// f(x)
 		return 0.0f;
 	}
 
-	virtual VectorXf operator()(VectorXf& x, float lambda)
+	virtual Eigen::VectorXf operator()(Eigen::VectorXf& x, float lambda)
 	{
 		// prox_{\lambda f}(x)
 		return x;
 	}
 
-	virtual VectorXf operator()(VectorXf& x)
+	virtual Eigen::VectorXf operator()(Eigen::VectorXf& x)
 	{
 		return x;
 	}
 
-	virtual VectorXf prox(VectorXf& x, float lambda)
+	virtual Eigen::VectorXf prox(Eigen::VectorXf& x, float lambda)
 	{
 		return (*this)(x, lambda);
 	}
@@ -40,14 +40,14 @@ public:
 class softThresholdingOperator : public proxOperator
 {
 public:
-	float f(VectorXf& x) override
+	float f(Eigen::VectorXf& x) override
 	{
 		return x.lpNorm<1>();
 	}
 
-	VectorXf operator()(VectorXf& x, float lambda) override
+	Eigen::VectorXf operator()(Eigen::VectorXf& x, float lambda) override
 	{
-		return x.array().sign()*((x.array().abs()-lambda).max(ArrayXf::Zero(x.rows())));
+		return x.array().sign()*((x.array().abs()-lambda).max(Eigen::ArrayXf::Zero(x.rows())));
 	}
 };
 
@@ -58,35 +58,35 @@ public:
 class proxLinearEquality : public proxOperator
 {
 public:
-	proxLinearEquality(MatrixXf& A, VectorXf& b) : _A(A), _b(b)
+	proxLinearEquality(Eigen::MatrixXf& A, Eigen::VectorXf& b) : _A(A), _b(b)
 	{
 		_Q = A.transpose()*((A*A.transpose()).inverse());
 		_Qb = _Q*_b;
 		_QA = _Q*_A;
 	}
 
-	float f(VectorXf& x) override
+	float f(Eigen::VectorXf& x) override
 	{
 		if((_A*x - _b).norm() < tol)
 		{
 			return 0;
 		} else {
-			return Infinity;
+			return Eigen::Infinity;
 		}
 	}
 
-	VectorXf operator()(VectorXf& x, float lambda) override
+	Eigen::VectorXf operator()(Eigen::VectorXf& x, float lambda) override
 	{
-		return (x - _QA*x - _Qb);
+		return (x - _QA*x + _Qb);
 	}
 private:
-	MatrixXf _A;
-	MatrixXf _b;
-	MatrixXf _Q;
-	MatrixXf _QA;
-	VectorXf _Qb;
+	Eigen::MatrixXf _A;
+	Eigen::MatrixXf _b;
+	Eigen::MatrixXf _Q;
+	Eigen::MatrixXf _QA;
+	Eigen::VectorXf _Qb;
 
-	const double tol = 1e-6;
+	const double tol = 1e-8;
 };
 
 //	Proximal operator of the squared L2 norm
@@ -94,12 +94,12 @@ private:
 class proximalL2Square : public proxOperator
 {
 public:
-	float f(VectorXf& x) override
+	float f(Eigen::VectorXf& x) override
 	{
 		return x.squaredNorm();
 	}
 
-	VectorXf operator()(VectorXf& x, float lambda) override
+	Eigen::VectorXf operator()(Eigen::VectorXf& x, float lambda) override
 	{
 		return x/(1.0f+lambda);
 	}
@@ -111,16 +111,16 @@ public:
 class proximalL2 : public proxOperator
 {
 public:
-	float f(VectorXf& x)
+	float f(Eigen::VectorXf& x)
 	{
 		return x.lpNorm<2>();
 	}
 
-	VectorXf operator()(VectorXf& x, float lambda)
+	Eigen::VectorXf operator()(Eigen::VectorXf& x, float lambda)
 	{
 		const float norm2 = x.lpNorm<2>();
 
-		if(lambda > norm2) return VectorXf::Zero(x.rows());
+		if(lambda > norm2) return Eigen::VectorXf::Zero(x.rows());
 
 		return x*(1 - lambda / norm2);
 	}
@@ -135,12 +135,12 @@ class proximalL2Ball : public proxOperator
 public:
 	proximalL2Ball(float lambda) : radius(lambda) {}
 
-	float f(VectorXf& x)
+	float f(Eigen::VectorXf& x)
 	{
-		return x.lpNorm<2>() <= radius ? 0 : Infinity;
+		return x.lpNorm<2>() <= radius ? 0 : Eigen::Infinity;
 	}
 
-	VectorXf operator()(VectorXf& x, float lambda = 0.0)
+	Eigen::VectorXf operator()(Eigen::VectorXf& x, float lambda = 0.0)
 	{
 		return x*radius/x.lpNorm<2>();
 	}
@@ -163,16 +163,16 @@ class proximalL1Ball : public proxOperator
 public:
 	proximalL1Ball(float lambda) : radius(lambda) {}
 
-	float f(VectorXf& x)
+	float f(Eigen::VectorXf& x)
 	{
-		return (x.lpNorm<1>() < radius) ? 0 : Infinity;
+		return (x.lpNorm<1>() < radius) ? 0 : Eigen::Infinity;
 	}
 
-	VectorXf operator()(VectorXf& x, float lambda = 0.0f)
+	Eigen::VectorXf operator()(Eigen::VectorXf& x, float lambda = 0.0f)
 	{
 		if(x.lpNorm<1>() < radius) return x;
 
-		ArrayXf u = ArrayXf(x.array().abs());
+		Eigen::ArrayXf u = Eigen::ArrayXf(x.array().abs());
 		std::sort(u.data(), u.data()+u.size(), std::greater<float>());
 
 		int k=1, K=1;
@@ -196,8 +196,8 @@ public:
 		}
 		std::cout << tau << std::endl;
 
-		VectorXf xtau = x.array().abs()-tau*ArrayXf::Ones(x.rows());
-		return x.array().sign()*(xtau).array().max(VectorXf::Zero(x.rows()).array());
+		Eigen::VectorXf xtau = x.array().abs()-tau*Eigen::ArrayXf::Ones(x.rows());
+		return x.array().sign()*(xtau).array().max(Eigen::VectorXf::Zero(x.rows()).array());
 	}
 private:
 	float radius;
@@ -211,12 +211,12 @@ class proximalLinfBall : public proxOperator
 public:
 	proximalLinfBall(float lambda) : radius(lambda) {}
 
-	float f(VectorXf& x) override
+	float f(Eigen::VectorXf& x) override
 	{
-		return (x.lpNorm<Infinity>() < radius) ? 0 : Infinity;
+		return (x.lpNorm<Eigen::Infinity>() < radius) ? 0 : Eigen::Infinity;
 	}
 
-	VectorXf operator()(VectorXf& x, float lambda = 0.0f) override
+	Eigen::VectorXf operator()(Eigen::VectorXf& x, float lambda = 0.0f) override
 	{
 		for(int i = 0; i < x.rows(); i++)
 		{
@@ -238,17 +238,17 @@ public:
 	r_linf(radius_linf)
 	{}
 
-	float f(VectorXf& x)
+	float f(Eigen::VectorXf& x)
 	{
-		if(x.lpNorm<1>()<r_l1 && x.lpNorm<Infinity>() < r_linf) return 0.0f;
-		return Infinity;
+		if(x.lpNorm<1>()<r_l1 && x.lpNorm<Eigen::Infinity>() < r_linf) return 0.0f;
+		return Eigen::Infinity;
 	}
 
-	VectorXf operator()(VectorXf& x)
+	Eigen::VectorXf operator()(Eigen::VectorXf& x)
 	{
 		int n = x.rows();
 		proximalLinfBall projLinf(r_linf);
-		VectorXf y = projLinf(x);
+		Eigen::VectorXf y = projLinf(x);
 
 		if(y.lpNorm<1>() < r_l1) return y;
 
@@ -257,15 +257,15 @@ public:
 		int k = 0;
 		float nu_l = 0.0f;
 		float nu_r = x.array().abs().maxCoeff();
-		ArrayXf z1,z2;
+		Eigen::ArrayXf z1,z2;
 
 		while((k < itermax) && (nu_l - nu_r > eps))
 		{
 			float nu_m = 0.5*(nu_l+nu_r);
 
-			z1 = y.array().abs()-nu_m*ArrayXf::Ones(n);
-			z1 = z1.max(ArrayXf::Zero(n));
-			z2 = z1.min(r_linf*ArrayXf::Ones(n));
+			z1 = y.array().abs()-nu_m*Eigen::ArrayXf::Ones(n);
+			z1 = z1.max(Eigen::ArrayXf::Zero(n));
+			z2 = z1.min(r_linf*Eigen::ArrayXf::Ones(n));
 
 			if(z2.lpNorm<1>() < r_l1)
 			{
@@ -283,5 +283,7 @@ private:
 	float r_l1; // radius of L1 ball
 	float r_linf;  // radius of Linf ball (max coeff of abs values)
 };
+
+} // namespace proxopp
 
 #endif

@@ -1,13 +1,9 @@
 #include <iostream>
 #include <Eigen/Dense>
-
-using namespace Eigen;
-
 #include "proximalGradient.hpp"
 #include "douglasRachford.hpp"
 #include "admmSolver.hpp"
 #include <ctime>
-
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -15,27 +11,27 @@ using namespace Eigen;
 int main(int argc, char **argv)
 {
 	srand(time(0));
-	const int M = 1200;
-	const int w = 64;
+	const int M = 800;
+	const int w = 32;
 	int N = w*w;
 
-	const int Sparsity = 200;
+	const int Sparsity = 100;
 
-	VectorXf b = VectorXf::Zero(N); // ground truth sparse in the canonical basis
+	Eigen::VectorXf b = Eigen::VectorXf::Zero(N); // ground truth sparse in the canonical basis
 
 	for(int i = 0; i < Sparsity; i++)
 	{
 		b[rand() % N] = (float)(rand()) / std::numeric_limits<int>::max();
 	}
 
-	MatrixXf A = MatrixXf::Random(M,N); // Measurement matrix M by N
-	VectorXf y = A*b; // Measurements without noise
+	Eigen::MatrixXf A = Eigen::MatrixXf::Random(M,N); // Measurement matrix M by N
+	Eigen::VectorXf y = A*b; // Measurements without noise
 
-	basisPursuitSolver basisPursuit(N);
-	basisPursuit.swapProx();
+	proxopp::basisPursuitSolver basisPursuit(N);
+	// basisPursuit.swapProx();
 	basisPursuit.setMaxSteps(200);
 
-	VectorXf x 	= basisPursuit.solve(A,y);
+	Eigen::VectorXf x 	= basisPursuit.solve(A,y);
 
 	std::cout << "BP SNR: " << -20.0f*log10((b-x).norm()/b.norm()) << std::endl;
 

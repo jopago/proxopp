@@ -5,16 +5,16 @@
 #include <fstream>
 #include <Eigen/Dense>
 
-using namespace Eigen;
-
+namespace proxopp
+{
 class Solver
 {
 public:
-	Solver(int n, int verbose=1, int max_steps=100, std::string name="solver") : step(0), verbose(verbose), 
+	Solver(int n, int verbose=1, int max_steps=100, std::string name="solver") : step(0), verbose(verbose),
 			max_steps(max_steps), name(name)
 	{
 		this->n = n;
-		_x = VectorXf::Zero(n);
+		_x = Eigen::VectorXf::Zero(n);
 
 		if(verbose > 1)
 		{
@@ -23,7 +23,7 @@ public:
 			if(!output.is_open())
 			{
 				std::cout << "(" << name << ")" << " cannot open output file\n";
-			} else 
+			} else
 			{
 				output << "step,objective\n";
 			}
@@ -32,14 +32,14 @@ public:
 		stop = 0;
 	}
 
-	virtual ~Solver() 
+	virtual ~Solver()
 	{
 		if(output.is_open()) output.close();
 	}
 
-	virtual void callback() 
+	virtual void callback()
 	{
-		if(verbose > 0) 
+		if(verbose > 0)
 		{
 			std::cout << "(" << name << ") " << step << "/" << max_steps << " objective: " << currentObjective() << " \n";
 
@@ -52,14 +52,14 @@ public:
 
 	virtual void iterate() {}
 
-	virtual float currentObjective() 
+	virtual float currentObjective()
 	{
-		return 0.0f; 
+		return 0.0f;
 	}
 
-	virtual void initParameters(MatrixXf& A, VectorXf& b) {}
+	virtual void initParameters(Eigen::MatrixXf& A, Eigen::VectorXf& b) {}
 
-	virtual VectorXf solve(MatrixXf& A, VectorXf& b) 
+	virtual Eigen::VectorXf solve(Eigen::MatrixXf& A, Eigen::VectorXf& b)
 	{
 		initParameters(A,b);
 
@@ -67,7 +67,7 @@ public:
 		{
 			iterate();
 			callback();
-			if(stop) break; 
+			if(stop) break;
 		}
 
 		return _x;
@@ -86,17 +86,18 @@ public:
 	int getMaxSteps() { return max_steps; }
 
 	std::string getName() { return name; }
-	
+
 protected:
 	int verbose;
-	int n; 
-	int step; 
-	int stop; 
-	int max_steps; 
+	int n;
+	int step;
+	int stop;
+	int max_steps;
 	std::string name;
 	std::ofstream output;
 
-	VectorXf _x; // current state 
+	Eigen::VectorXf _x; // current state
 };
+} // namespace proxopp 
 
 #endif

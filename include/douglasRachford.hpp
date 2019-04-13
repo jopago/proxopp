@@ -4,8 +4,7 @@
 #include "Solver.hpp"
 #include "proximals.hpp"
 
-using namespace Eigen; 
-
+namespace proxopp {
 //	This class solves min f(x) + g(x) where f,g are convex
 //	and proximal, the proximal operator is given in a
 //	class that can evaluate prox_{\lambda f}(x) and f(x)
@@ -30,7 +29,7 @@ public:
 
 	void iterate()
 	{
-		VectorXf prox_step;
+		Eigen::VectorXf prox_step;
 
 		_x = (*proxF)(_y, 1.0f);
 		prox_step = 2*_x - _y;
@@ -57,7 +56,7 @@ public:
 		swap = true;		
 	}
 protected:
-	VectorXf _y;
+	Eigen::VectorXf _y;
 
 	proxOperator *proxF, *proxG;
 	int swap = false;
@@ -74,7 +73,7 @@ public:
 	}
 	~basisPursuitSolver() {}
 
-	void initParameters(MatrixXf& A, VectorXf& b) override
+	void initParameters(Eigen::MatrixXf& A, Eigen::VectorXf& b) override
 	{
 		_A = A;
 		_b = b;
@@ -90,14 +89,14 @@ public:
 		}
 	}
 
-	/*
 	float currentObjective() override
 	{
 		return _x.lpNorm<1>(); 
-	} */
+	} 
 private:
-	MatrixXf _A;
-	VectorXf _b;
+	Eigen::MatrixXf _A;
+	Eigen::VectorXf _b;
 };
+}
 
 #endif

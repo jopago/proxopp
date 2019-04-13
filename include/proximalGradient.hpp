@@ -4,8 +4,7 @@
 #include "Solver.hpp"
 #include "proximals.hpp"
 
-using namespace Eigen;
-
+namespace proxopp {
 // Simple proximal gradient descent without backtracking (for now)
 
 class proximalGradientSolver : public Solver 
@@ -22,7 +21,7 @@ public:
 		delete proxF;
 	}
 
-	void initParameters(MatrixXf& A, VectorXf& b) override
+	void initParameters(Eigen::MatrixXf& A, Eigen::VectorXf& b) override
 	{
 		_A = A; 
 		_b = b;
@@ -30,7 +29,7 @@ public:
 
 	void iterate() override
 	{	
-		VectorXf grad_step = _x - step_size*gradient(_x);
+		Eigen::VectorXf grad_step = _x - step_size*gradient(_x);
 		_x = (*proxF)(grad_step, gamma);
 	}
 
@@ -49,13 +48,13 @@ public:
 		proxF = prox; 
 	}
 protected:
-	VectorXf gradient(VectorXf x)
+	Eigen::VectorXf gradient(Eigen::VectorXf x)
 	{
 		return _A.transpose()*(_A*x - _b);
 	}
 
-	MatrixXf _A;
-	VectorXf _b;
+	Eigen::MatrixXf _A;
+	Eigen::VectorXf _b;
 
 	float step_size; 
 	float gamma; 
@@ -79,13 +78,13 @@ public:
 		name), compute_step_size(compute_step_size),
 		momentum(momentum)
 	{
-		_z 	= VectorXf::Zero(n);
-		_Ab = VectorXf::Zero(n);
+		_z 	= Eigen::VectorXf::Zero(n);
+		_Ab = Eigen::VectorXf::Zero(n);
 		_x_new = _x;
 	}
 	~fistaSolver() {}
 
-	void initParameters(MatrixXf& A, VectorXf& b) override
+	void initParameters(Eigen::MatrixXf& A, Eigen::VectorXf& b) override
 	{
 		_A = A; 
 		_b = b;
@@ -99,7 +98,7 @@ public:
 		
 		if(compute_step_size)
 		{
-			SelfAdjointEigenSolver<MatrixXf> es;
+			Eigen::SelfAdjointEigenSolver<Eigen::MatrixXf> es;
 			es.compute(_Q, false);
 
 			float spectralRadius = es.eigenvalues().array().abs().maxCoeff();
@@ -110,7 +109,7 @@ public:
 
 	void iterate() override
 	{	
-		VectorXf grad_step = _z - step_size*(_Q*_z - _Ab);
+		Eigen::VectorXf grad_step = _z - step_size*(_Q*_z - _Ab);
 		_x_new = (*proxF)(grad_step, step_size);
 		momentum_new =  0.5f*(1.0f + sqrt(1.0f + 4.0f*momentum*momentum)); 
 		_z = _x_new + ((momentum-1) / momentum_new) * (_x_new - _x);
@@ -120,11 +119,12 @@ public:
 	}
 
 private:
-	MatrixXf _Q;
-	VectorXf _Ab, _z, _x_new; 
+	Eigen::MatrixXf _Q;
+	Eigen::VectorXf _Ab, _z, _x_new; 
 
 	float momentum, momentum_new; // Nesterov momentum
 	bool compute_step_size = true;
 };
+} 
 
 #endif 
