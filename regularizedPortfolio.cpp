@@ -6,7 +6,7 @@ int main(int argc, char **argv)
 {
     Eigen::VectorXf mu = Eigen::VectorXf(4);
     const float regularization = 0.1f;
-    const float volatility_target = 0.05; // 3% max vol
+    const float volatility_target = 0.05; // 5% max vol
 
     // Vector of asset expected returns
     mu << 0.1, 0.3, -0.5, 0.6;

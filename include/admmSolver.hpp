@@ -19,7 +19,7 @@ public:
         mu = 1e6;
         rho = 1.0f;
 
-        dual_tol = primal_tol = 1e-9;
+        dual_tol = primal_tol = 1e-8;
         dual_err = primal_err = 1.0f;
         multiplier = 2.0f;
 
@@ -28,7 +28,7 @@ public:
         z_old = z;
         A = Eigen::MatrixXf::Identity(n,n);
 
-        max_steps = 500;
+        max_steps = 300;
     }
     ~admmSolver() {}
 

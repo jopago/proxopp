@@ -2,6 +2,7 @@
 #define __PROXIMALS__
 
 #include <Eigen/Dense>
+#include <limits>
 
 namespace proxopp
 {
@@ -71,7 +72,7 @@ public:
 		{
 			return 0;
 		} else {
-			return Eigen::Infinity;
+			return std::numeric_limits<float>::max();
 		}
 	}
 
@@ -137,7 +138,7 @@ public:
 
 	float f(Eigen::VectorXf& x)
 	{
-		return x.lpNorm<2>() <= radius ? 0 : Eigen::Infinity;
+		return x.lpNorm<2>() <= radius ? 0 : std::numeric_limits<float>::max();
 	}
 
 	Eigen::VectorXf operator()(Eigen::VectorXf& x, float lambda = 0.0)
@@ -165,7 +166,7 @@ public:
 
 	float f(Eigen::VectorXf& x)
 	{
-		return (x.lpNorm<1>() < radius) ? 0 : Eigen::Infinity;
+		return (x.lpNorm<1>() < radius) ? 0 : std::numeric_limits<float>::max();
 	}
 
 	Eigen::VectorXf operator()(Eigen::VectorXf& x, float lambda = 0.0f)
@@ -213,7 +214,7 @@ public:
 
 	float f(Eigen::VectorXf& x) override
 	{
-		return (x.lpNorm<Eigen::Infinity>() < radius) ? 0 : Eigen::Infinity;
+		return (x.lpNorm<Eigen::Infinity>() < radius) ? 0 : std::numeric_limits<float>::max();
 	}
 
 	Eigen::VectorXf operator()(Eigen::VectorXf& x, float lambda = 0.0f) override
@@ -241,7 +242,7 @@ public:
 	float f(Eigen::VectorXf& x)
 	{
 		if(x.lpNorm<1>()<r_l1 && x.lpNorm<Eigen::Infinity>() < r_linf) return 0.0f;
-		return Eigen::Infinity;
+		return std::numeric_limits<float>::max();
 	}
 
 	Eigen::VectorXf operator()(Eigen::VectorXf& x)

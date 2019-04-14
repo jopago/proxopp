@@ -3,6 +3,7 @@
 
 #include "Solver.hpp"
 #include "proximals.hpp"
+#include <limits>
 
 namespace proxopp {
 //	This class solves min f(x) + g(x) where f,g are convex
@@ -91,7 +92,7 @@ public:
 
 	float currentObjective() override
 	{
-		return _x.lpNorm<1>(); 
+		return _x.lpNorm<1>();
 	} 
 private:
 	Eigen::MatrixXf _A;
