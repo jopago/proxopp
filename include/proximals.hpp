@@ -26,7 +26,7 @@ public:
 
 	virtual Eigen::VectorXf operator()(Eigen::VectorXf& x)
 	{
-		return x;
+		(*this)(x, 1.0); 
 	}
 
 	virtual Eigen::VectorXf prox(Eigen::VectorXf& x, float lambda)
