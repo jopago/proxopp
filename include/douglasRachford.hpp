@@ -4,6 +4,7 @@
 #include "Solver.hpp"
 #include "proximals.hpp"
 #include <limits>
+#include <memory>
 
 namespace proxopp {
 //	This class solves min f(x) + g(x) where f,g are convex
@@ -24,8 +25,6 @@ public:
 	}
 	~douglasRachfordSolver() 
 	{
-		delete proxF;
-		delete proxG;
 	}
 
 	void iterate()
@@ -42,12 +41,12 @@ public:
 		return proxF->f(_x) + proxG->f(_x);
 	}
 
-	void setProxF(proxOperator* proxF) 
+	void setProxF(std::shared_ptr<proxOperator> proxF) 
 	{
 		this->proxF = proxF;
 	}
 
-	void setProxG(proxOperator* proxG)
+	void setProxG(std::shared_ptr<proxOperator> proxG)
 	{
 		this->proxG = proxG;
 	}
@@ -59,7 +58,7 @@ public:
 protected:
 	Eigen::VectorXf _y;
 
-	proxOperator *proxF, *proxG;
+	std::shared_ptr<proxOperator> proxF, proxG;
 	int swap = false;
 };
 
@@ -70,7 +69,7 @@ public:
 	basisPursuitSolver(int n, int verbose=1, int max_steps=100, std::string name="Basis Pursuit (DR)") : 
 	douglasRachfordSolver(n, verbose, max_steps, name)
 	{
-		proxF = new softThresholdingOperator(); 
+		proxF = std::make_shared<softThresholdingOperator>(); 
 	}
 	~basisPursuitSolver() {}
 
@@ -79,11 +78,11 @@ public:
 		_A = A;
 		_b = b;
 
-		proxG = new proxLinearEquality(_A,_b); 
+		proxG = std::make_shared<proxLinearEquality>(_A, _b);  
 
 		if(swap)
 		{
-			proxOperator *tmp;
+			std::shared_ptr<proxOperator> tmp;
 			tmp = proxF;
 			proxF = proxG;
 			proxG = tmp;
