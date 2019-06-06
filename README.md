@@ -1,6 +1,6 @@
 
 # proxopp
-> Proximal optimization algorithms in C++ with Eigen for convex optimization
+> Proximal optimization in C++ with Eigen for convex optimization
 
 [![License](http://img.shields.io/:license-mit-blue.svg?style=flat-square)](LICENSE)
 
@@ -18,10 +18,15 @@ that appear frequently in signal processing (compressed sensing for instance), q
 - Douglas Rachford (or proximal splitting) for basis pursuit
 - Proximal gradient descent for LASSO (ISTA)
 - FISTA
-- ADMM for regularized portfolio optimization
+- ADMM for portfolio optimization
 
 ![convergence](https://raw.githubusercontent.com/jopago/proxopp/master/output/convergence.png)
 
+# Todo
+
+- Constraints proxial operator (Dykstra's algorithm)
+- Testing 
+- ~~ADMM~~
 
 # References 
 

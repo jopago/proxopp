@@ -125,6 +125,6 @@ private:
 	float momentum, momentum_new; // Nesterov momentum
 	bool compute_step_size = true;
 };
-} 
+} // namespace proxopp  
 
 #endif 
