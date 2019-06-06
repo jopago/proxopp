@@ -87,7 +87,7 @@ private:
 	Eigen::MatrixXf _QA;
 	Eigen::VectorXf _Qb;
 
-	const double tol = 1e-8;
+	const double tol = 1e-6;
 };
 
 //	Proximal operator of the squared L2 norm
@@ -143,6 +143,11 @@ public:
 
 	Eigen::VectorXf operator()(Eigen::VectorXf& x, float lambda = 0.0)
 	{
+		float norm2 = x.lpNorm<2>(); 
+
+		if(norm2 == 0.0f) 
+			return Eigen::VectorXf::Zero(x.rows()); 
+			 
 		return x*radius/x.lpNorm<2>();
 	}
 private:

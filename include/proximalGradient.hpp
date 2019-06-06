@@ -3,6 +3,7 @@
 
 #include "Solver.hpp"
 #include "proximals.hpp"
+#include <memory>
 
 namespace proxopp {
 // Simple proximal gradient descent without backtracking (for now)
@@ -14,11 +15,10 @@ public:
 		float step_size = 0.01f, int verbose=1, int max_steps=100, 
 		std::string name="ISTA") : Solver(n, verbose, max_steps, name), gamma(gamma), step_size(step_size)
 	{
-		proxF = new softThresholdingOperator(); 
+		proxF = std::make_shared<softThresholdingOperator>();
 	}
 	~proximalGradientSolver() 
 	{
-		delete proxF;
 	}
 
 	void initParameters(Eigen::MatrixXf& A, Eigen::VectorXf& b) override
@@ -43,7 +43,7 @@ public:
 		this->step_size = step_size;
 	}
 
-	void setProximal(proxOperator *prox)
+	void setProximal(std::shared_ptr<proxOperator> prox)
 	{
 		proxF = prox; 
 	}
@@ -58,7 +58,7 @@ protected:
 
 	float step_size; 
 	float gamma; 
-	proxOperator* proxF; 
+	std::shared_ptr<proxOperator> proxF; 
 };
 
 /* 	FISTA
