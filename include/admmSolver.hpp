@@ -3,6 +3,7 @@
 
 #include "Solver.hpp"
 #include "proximals.hpp"
+#include <memory>
 
 // ADMM Algorithm to solve  arg min f(x) + g(z)
 //                          s.t Ax + z = 0
@@ -30,7 +31,6 @@ public:
 
         max_steps = 300;
     }
-    ~admmSolver() {}
 
     Eigen::VectorXf solve()
     {
@@ -97,7 +97,7 @@ public:
     float lambda = 0.01f) : admmSolver(returns.rows()), vol_target(vol_target),
     lambda(lambda), covariance(covariance), returns(returns), x0(x0)
     {
-        projL2 = new proximalL2Ball(vol_target);
+        projL2 = std::make_unique<proximalL2Ball>(vol_target);
         xStepSystem = lambda*Eigen::MatrixXf::Identity(returns.rows(), returns.rows()) + rho*covariance;
 
         //  The quadratic form constraint <x,Sigma*x> <= vol_target^2
@@ -106,10 +106,6 @@ public:
 
         L = covariance.llt().matrixL().transpose();
         A = -L;
-    }
-    ~ptfVolConstrainedL2()
-    {
-        delete projL2;
     }
 
     void rho_callback()
@@ -137,7 +133,7 @@ public:
         return -returns.dot(_x) + lambda*(_x-x0).squaredNorm() + projL2->f(Lx);
     }
 private:
-    proxOperator *projL2;
+    std::unique_ptr<proxOperator> projL2;
 
     float lambda, vol_target;
     Eigen::VectorXf returns, x0;

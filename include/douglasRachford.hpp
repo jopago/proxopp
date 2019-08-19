@@ -3,7 +3,6 @@
 
 #include "Solver.hpp"
 #include "proximals.hpp"
-#include <memory>
 #include <limits>
 #include <memory>
 
@@ -41,12 +40,12 @@ public:
 		return proxF->f(_x) + proxG->f(_x);
 	}
 
-	void setProxF(std::shared_ptr<proxOperator> proxF) 
+	void setProxF(const std::shared_ptr<proxOperator>& proxF) 
 	{
 		this->proxF = proxF;
 	}
 
-	void setProxG(std::shared_ptr<proxOperator> proxG)
+	void setProxG(const std::shared_ptr<proxOperator>& proxG)
 	{
 		this->proxG = proxG;
 	}
@@ -79,13 +78,10 @@ public:
 		_b = b;
 
 		proxG = std::make_shared<proxLinearEquality>(_A, _b); 
-
+		
 		if(swap)
 		{
-			std::shared_ptr<proxOperator> tmp;
-			tmp = proxF;
-			proxF = proxG;
-			proxG = tmp;
+			proxF.swap(proxG);
 		}
 	}
 

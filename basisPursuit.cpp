@@ -9,7 +9,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-float snr(Eigen::VectorXf& x_true, Eigen::VectorXf& x_rec)
+float snr(const Eigen::VectorXf& x_true, const Eigen::VectorXf& x_rec)
 {
 	return -20.0f*log10((x_true-x_rec).norm()/x_true.norm());
 }
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 	std::cout << "BP SNR: " << snr(b,x) << std::endl;
 
 	cv::Size size(w,w);
-	cv::Mat original(size, CV_32FC1), reconstruction(size,CV_32FC1);
+	cv::Mat original(size, CV_32FC1), reconstruction(size, CV_32FC1);
 
 	for(int i = 0; i < w; i++)
 	{
@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 	original.copyTo(frame.rowRange(0, 512).colRange(0, 512));
 	reconstruction.copyTo(frame.rowRange(0, 512).colRange(512, 1024));
 
-	cv::cvtColor(frame,frame,CV_GRAY2RGB);
+	cv::cvtColor(frame,frame,cv::COLOR_GRAY2RGB);
 	cv::line(frame, cv::Point(512,0), cv::Point(512,512),CV_RGB(0,255,0));
 
 	cv::putText(frame,"Original",
